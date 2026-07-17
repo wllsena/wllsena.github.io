@@ -1,0 +1,222 @@
+{
+  "$defs": {
+    "dnsLabel": {
+      "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$",
+      "type": "string"
+    },
+    "flowspecSections": {
+      "additionalProperties": false,
+      "properties": {
+        "auto_flow": {
+          "type": "object"
+        },
+        "capabilities": {
+          "type": "object"
+        },
+        "config": {
+          "type": "object"
+        },
+        "confirm": {
+          "type": "object"
+        },
+        "derive": {
+          "type": "array"
+        },
+        "domains": {
+          "type": "object"
+        },
+        "entry": {
+          "type": "object"
+        },
+        "overrides": {
+          "type": "object"
+        },
+        "route": {
+          "type": "object"
+        },
+        "schema": {
+          "const": "flowspec/2"
+        },
+        "service": {
+          "type": "object"
+        },
+        "slots": {
+          "type": "object"
+        },
+        "terminal": {
+          "type": "object"
+        },
+        "uses": {
+          "type": "array"
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        }
+      },
+      "required": [
+        "schema",
+        "version",
+        "route",
+        "domains"
+      ],
+      "type": "object"
+    },
+    "profileTask": {
+      "additionalProperties": false,
+      "properties": {
+        "call": {
+          "enum": [
+            "flowspec2.slot",
+            "flowspec2.confirm",
+            "flowspec2.derive",
+            "flowspec2.terminal",
+            "flowspec2.use",
+            "flowspec2.await_external"
+          ]
+        },
+        "metadata": {
+          "additionalProperties": false,
+          "properties": {
+            "path_index": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "path_index"
+          ],
+          "type": "object"
+        },
+        "with": {
+          "additionalProperties": false,
+          "properties": {
+            "step": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "step"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "call",
+        "with",
+        "metadata"
+      ],
+      "type": "object"
+    },
+    "semanticVersion": {
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "type": "string"
+    }
+  },
+  "$id": "https://wllsena.github.io/flowspec2/schemas/open-workflow-conversation-1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Strict schema for the flowspec2 conversational profile only. It is not a validator for arbitrary Open Workflow Specification documents.",
+  "properties": {
+    "do": {
+      "items": {
+        "additionalProperties": {
+          "$ref": "#/$defs/profileTask"
+        },
+        "maxProperties": 1,
+        "minProperties": 1,
+        "propertyNames": {
+          "pattern": "^path-(0|[1-9][0-9]*)-(slot|confirm|derive|terminal|use|await_external)$"
+        },
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "document": {
+      "additionalProperties": false,
+      "properties": {
+        "dsl": {
+          "const": "1.0.3"
+        },
+        "metadata": {
+          "additionalProperties": false,
+          "properties": {
+            "flowspec2": {
+              "additionalProperties": false,
+              "properties": {
+                "original_flow_id": {
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "type": "string"
+                },
+                "profile": {
+                  "const": "https://wllsena.github.io/flowspec2/profiles/open-workflow-conversation-1"
+                },
+                "sections": {
+                  "$ref": "#/$defs/flowspecSections"
+                }
+              },
+              "required": [
+                "profile",
+                "original_flow_id",
+                "sections"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "flowspec2"
+          ],
+          "type": "object"
+        },
+        "name": {
+          "$ref": "#/$defs/dnsLabel"
+        },
+        "namespace": {
+          "$ref": "#/$defs/dnsLabel"
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        }
+      },
+      "required": [
+        "dsl",
+        "namespace",
+        "name",
+        "version",
+        "metadata"
+      ],
+      "type": "object"
+    },
+    "input": {
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "document": {
+              "type": "object"
+            },
+            "format": {
+              "const": "json"
+            }
+          },
+          "required": [
+            "format",
+            "document"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "document",
+    "do"
+  ],
+  "title": "flowspec2 conversational profile for Open Workflow Specification 1.0.3",
+  "type": "object"
+}

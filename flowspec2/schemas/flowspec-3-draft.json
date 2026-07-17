@@ -1,0 +1,1718 @@
+{
+  "$defs": {
+    "addressReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$address": {
+          "$ref": "#/$defs/objectAccessPath"
+        }
+      },
+      "required": [
+        "$address"
+      ],
+      "type": "object"
+    },
+    "arrayAccessPath": {
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\.(?:[A-Za-z_][A-Za-z0-9_]*|0|[1-9][0-9]*))*$",
+      "type": "string"
+    },
+    "awaitStep": {
+      "additionalProperties": false,
+      "properties": {
+        "await": {
+          "enum": [
+            "cta_url"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "on_resume": {
+          "$ref": "#/$defs/onResume"
+        },
+        "prompt": {
+          "$ref": "#/$defs/prompt"
+        },
+        "recovery": {
+          "additionalProperties": false,
+          "properties": {
+            "abort": {
+              "$ref": "#/$defs/transition"
+            },
+            "resend": {
+              "$ref": "#/$defs/transition"
+            },
+            "switch": {
+              "$ref": "#/$defs/transition"
+            }
+          },
+          "type": "object"
+        },
+        "resume_on": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "timeout": {
+          "$ref": "#/$defs/transition"
+        },
+        "ui": {
+          "$ref": "#/$defs/ctaUi"
+        }
+      },
+      "required": [
+        "await",
+        "id",
+        "resume_on",
+        "ui"
+      ],
+      "type": "object"
+    },
+    "booleanDomain": {
+      "additionalProperties": false,
+      "properties": {
+        "normalize": {
+          "$ref": "#/$defs/booleanNormalization"
+        },
+        "options": {
+          "items": false,
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/booleanOption"
+                },
+                {
+                  "properties": {
+                    "value": {
+                      "const": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/booleanOption"
+                },
+                {
+                  "properties": {
+                    "value": {
+                      "const": false
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "type": "array"
+        },
+        "type": {
+          "const": "bool"
+        }
+      },
+      "required": [
+        "type",
+        "options"
+      ],
+      "type": "object"
+    },
+    "booleanNormalization": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "emoji_veto": {
+                "const": true
+              }
+            },
+            "required": [
+              "emoji_veto"
+            ]
+          },
+          "then": {
+            "properties": {
+              "affirmation": {
+                "const": true
+              }
+            },
+            "required": [
+              "affirmation"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "accent_fold": {
+          "type": "boolean"
+        },
+        "affirmation": {
+          "type": "boolean"
+        },
+        "emoji_veto": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "booleanOption": {
+      "additionalProperties": false,
+      "properties": {
+        "aliases": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "value",
+        "label"
+      ],
+      "type": "object"
+    },
+    "buttonsUi": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "kind": {
+          "const": "buttons"
+        },
+        "options_when": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "gate": {
+                "$ref": "#/$defs/predicate"
+              },
+              "value": {
+                "$ref": "#/$defs/choiceValue"
+              }
+            },
+            "required": [
+              "value",
+              "gate"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "kind",
+        "field"
+      ],
+      "type": "object"
+    },
+    "categoricalDomain": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "null_aliases"
+            ]
+          },
+          "then": {
+            "required": [
+              "accepts_null"
+            ]
+          }
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "options": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "accepts_null"
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "accepts_null": {
+          "const": true
+        },
+        "normalize": {
+          "$ref": "#/$defs/categoricalNormalization"
+        },
+        "null_aliases": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/categoricalOption"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "categorical"
+        }
+      },
+      "required": [
+        "type",
+        "options"
+      ],
+      "type": "object"
+    },
+    "categoricalNormalization": {
+      "additionalProperties": false,
+      "properties": {
+        "accent_fold": {
+          "type": "boolean"
+        },
+        "number_words": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "categoricalOption": {
+      "additionalProperties": false,
+      "properties": {
+        "aliases": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "value": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "label"
+      ],
+      "type": "object"
+    },
+    "choiceValue": {
+      "type": [
+        "string",
+        "boolean"
+      ]
+    },
+    "collectStep": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "else": {
+            "not": {
+              "required": [
+                "default"
+              ]
+            }
+          },
+          "if": {
+            "properties": {
+              "on_exhaust": {
+                "const": "default"
+              }
+            },
+            "required": [
+              "on_exhaust"
+            ]
+          },
+          "then": {
+            "required": [
+              "default"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "nullable": {
+                "const": true
+              }
+            },
+            "required": [
+              "nullable"
+            ]
+          },
+          "then": {
+            "properties": {
+              "required": {
+                "const": true
+              }
+            },
+            "required": [
+              "required"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "prefill_sources"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fill_only_when_asked": {
+                "const": true
+              }
+            },
+            "required": [
+              "fill_only_when_asked"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "ask_when",
+              "gate"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "ask_when": {
+          "$ref": "#/$defs/predicate"
+        },
+        "collect": {
+          "$ref": "#/$defs/name"
+        },
+        "default": {},
+        "domain": {
+          "$ref": "#/$defs/domain"
+        },
+        "fill_only_when_asked": {
+          "type": "boolean"
+        },
+        "gate": {
+          "$ref": "#/$defs/predicate"
+        },
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "max_attempts": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "on_exhaust": {
+          "$ref": "#/$defs/exhaustion"
+        },
+        "persist": {
+          "$ref": "#/$defs/persistence"
+        },
+        "prefill_sources": {
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "prompt": {
+          "$ref": "#/$defs/prompt"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "requires": {
+          "items": {
+            "$ref": "#/$defs/slotReference"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "skip_when": {
+          "$ref": "#/$defs/predicate"
+        },
+        "ui": {
+          "$ref": "#/$defs/inputUi"
+        }
+      },
+      "required": [
+        "collect",
+        "domain"
+      ],
+      "type": "object"
+    },
+    "config": {
+      "additionalProperties": false,
+      "properties": {
+        "address_required": {
+          "type": "boolean"
+        },
+        "identification_required": {
+          "type": "boolean"
+        },
+        "max_attempts": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "configReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$config": {
+          "$ref": "#/$defs/objectAccessPath"
+        }
+      },
+      "required": [
+        "$config"
+      ],
+      "type": "object"
+    },
+    "confirmStep": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "else": {
+            "not": {
+              "required": [
+                "default"
+              ]
+            }
+          },
+          "if": {
+            "properties": {
+              "on_exhaust": {
+                "const": "default"
+              }
+            },
+            "required": [
+              "on_exhaust"
+            ]
+          },
+          "then": {
+            "required": [
+              "default"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "nullable": {
+                "const": true
+              }
+            },
+            "required": [
+              "nullable"
+            ]
+          },
+          "then": {
+            "properties": {
+              "required": {
+                "const": true
+              }
+            },
+            "required": [
+              "required"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "prefill_sources"
+            ]
+          },
+          "then": {
+            "properties": {
+              "fill_only_when_asked": {
+                "const": true
+              }
+            },
+            "required": [
+              "fill_only_when_asked"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "ask_when",
+              "gate"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "on_reject",
+              "correction_hub"
+            ]
+          }
+        },
+        {
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "correctable"
+                  ]
+                },
+                {
+                  "required": [
+                    "on_confirm"
+                  ]
+                }
+              ]
+            }
+          },
+          "if": {
+            "required": [
+              "correction_hub"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "ask_when"
+                  ]
+                },
+                {
+                  "required": [
+                    "skip_when"
+                  ]
+                },
+                {
+                  "required": [
+                    "gate"
+                  ]
+                },
+                {
+                  "required": [
+                    "on_reject"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "correctable",
+              "on_confirm"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "on_reject"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "ask_when"
+                  ]
+                },
+                {
+                  "required": [
+                    "gate"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "on_reject"
+                  ]
+                },
+                {
+                  "required": [
+                    "correction_hub"
+                  ]
+                }
+              ]
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "skip_when"
+              ]
+            }
+          }
+        }
+      ],
+      "properties": {
+        "ask_when": {
+          "$ref": "#/$defs/predicate"
+        },
+        "confirm": {
+          "$ref": "#/$defs/name"
+        },
+        "correctable": {
+          "items": {
+            "$ref": "#/$defs/slotReference"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "correction_hub": {
+          "const": true
+        },
+        "default": {},
+        "domain": {
+          "$ref": "#/$defs/booleanDomain"
+        },
+        "fill_only_when_asked": {
+          "type": "boolean"
+        },
+        "gate": {
+          "$ref": "#/$defs/predicate"
+        },
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "max_attempts": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "on_confirm": {
+          "$ref": "#/$defs/stepReference"
+        },
+        "on_exhaust": {
+          "$ref": "#/$defs/exhaustion"
+        },
+        "on_reject": {
+          "additionalProperties": false,
+          "properties": {
+            "end": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "end"
+          ],
+          "type": "object"
+        },
+        "persist": {
+          "$ref": "#/$defs/persistence"
+        },
+        "prefill_sources": {
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "prompt": {
+          "$ref": "#/$defs/prompt"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "requires": {
+          "items": {
+            "$ref": "#/$defs/slotReference"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "skip_when": {
+          "$ref": "#/$defs/predicate"
+        },
+        "ui": {
+          "$ref": "#/$defs/inputUi"
+        }
+      },
+      "required": [
+        "confirm",
+        "domain"
+      ],
+      "type": "object"
+    },
+    "ctaUi": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "kind": {
+          "const": "cta_url"
+        },
+        "next_step": {
+          "$ref": "#/$defs/stepReference"
+        },
+        "out_of_band": {
+          "const": true
+        }
+      },
+      "required": [
+        "kind",
+        "field",
+        "out_of_band",
+        "next_step"
+      ],
+      "type": "object"
+    },
+    "deriveReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$derive": {
+          "$ref": "#/$defs/stateKey"
+        }
+      },
+      "required": [
+        "$derive"
+      ],
+      "type": "object"
+    },
+    "deriveStep": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sourceReference"
+            },
+            {
+              "$ref": "#/$defs/jsonLiteral"
+            }
+          ]
+        },
+        "derive": {
+          "$ref": "#/$defs/name"
+        },
+        "from": {
+          "items": {
+            "$ref": "#/$defs/sourceReference"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "lookup": {
+          "additionalProperties": {
+            "$ref": "#/$defs/jsonLiteral"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "derive",
+        "from",
+        "lookup"
+      ],
+      "type": "object"
+    },
+    "domain": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/categoricalDomain"
+        },
+        {
+          "$ref": "#/$defs/booleanDomain"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "optional": {
+              "type": "boolean"
+            },
+            "type": {
+              "const": "free_text"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "enum": [
+                "brazilian_tax_id",
+                "email",
+                "name"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "maximum": {
+              "type": "number"
+            },
+            "minimum": {
+              "type": "number"
+            },
+            "type": {
+              "const": "integer"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "maximum": {
+              "type": "number"
+            },
+            "minimum": {
+              "type": "number"
+            },
+            "type": {
+              "const": "number"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "emptyPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "in_progress": {
+          "enum": [
+            "reset",
+            "ignore"
+          ]
+        },
+        "never_saved": {
+          "enum": [
+            "reset",
+            "ignore"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "enrichment": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/tokenBindingMap"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "set": {
+          "$ref": "#/$defs/resultBindingMap"
+        },
+        "tool": {
+          "$ref": "#/$defs/name"
+        }
+      },
+      "required": [
+        "tool"
+      ],
+      "type": "object"
+    },
+    "enrichmentResultReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$result": {
+          "$ref": "#/$defs/arrayAccessPath"
+        }
+      },
+      "required": [
+        "$result"
+      ],
+      "type": "object"
+    },
+    "exhaustion": {
+      "enum": [
+        "reask",
+        "skip",
+        "default",
+        "handoff",
+        "END"
+      ]
+    },
+    "fieldName": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+      "type": "string"
+    },
+    "flowUi": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "kind": {
+          "const": "flow"
+        },
+        "meta_flow_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "prefill_from": {
+          "items": {
+            "$ref": "#/$defs/slotReference"
+          },
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "kind",
+        "field",
+        "meta_flow_ref"
+      ],
+      "type": "object"
+    },
+    "inputUi": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/buttonsUi"
+        },
+        {
+          "$ref": "#/$defs/listUi"
+        },
+        {
+          "$ref": "#/$defs/flowUi"
+        }
+      ]
+    },
+    "internalReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$internal": {
+          "$ref": "#/$defs/objectAccessPath"
+        }
+      },
+      "required": [
+        "$internal"
+      ],
+      "type": "object"
+    },
+    "jsonLiteral": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/jsonScalar"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/jsonLiteral"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/jsonLiteral"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "^\\$(?:slot|derive|result|step|token|config|payload|internal|address)$"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "jsonPointer": {
+      "pattern": "^(?:/(?:[^~/]|~[01])*)+$",
+      "type": "string"
+    },
+    "jsonScalar": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "jsonValue": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/jsonScalar"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/jsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/jsonValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "listUi": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/fieldName"
+        },
+        "kind": {
+          "const": "list"
+        },
+        "options_when": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "gate": {
+                "$ref": "#/$defs/predicate"
+              },
+              "value": {
+                "$ref": "#/$defs/choiceValue"
+              }
+            },
+            "required": [
+              "value",
+              "gate"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "kind",
+        "field"
+      ],
+      "type": "object"
+    },
+    "literalMap": {
+      "additionalProperties": {
+        "$ref": "#/$defs/jsonValue"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/stateKey"
+      },
+      "type": "object"
+    },
+    "lossEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "type": "string"
+        },
+        "disposition": {
+          "enum": [
+            "compatibility_only",
+            "excluded"
+          ]
+        },
+        "source_fragment": {
+          "$ref": "#/$defs/passthroughValue"
+        },
+        "source_path": {
+          "$ref": "#/$defs/jsonPointer"
+        }
+      },
+      "required": [
+        "source_path",
+        "category",
+        "disposition",
+        "source_fragment"
+      ],
+      "type": "object"
+    },
+    "name": {
+      "$ref": "#/$defs/stateKey"
+    },
+    "objectAccessPath": {
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*$",
+      "type": "string"
+    },
+    "onResume": {
+      "additionalProperties": false,
+      "properties": {
+        "enrich": {
+          "$ref": "#/$defs/enrichment"
+        },
+        "set": {
+          "$ref": "#/$defs/tokenBindingMap"
+        }
+      },
+      "type": "object"
+    },
+    "operand": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/predicateReference"
+        },
+        {
+          "$ref": "#/$defs/jsonScalar"
+        }
+      ]
+    },
+    "outcomes": {
+      "additionalProperties": false,
+      "properties": {
+        "fatal": {
+          "additionalProperties": false,
+          "properties": {
+            "reset_next": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "retryable": {
+          "additionalProperties": false,
+          "properties": {
+            "preserve_state": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "success": {
+          "additionalProperties": false,
+          "properties": {
+            "reset_next": {
+              "type": "boolean"
+            },
+            "set": {
+              "$ref": "#/$defs/literalMap"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "success",
+        "retryable",
+        "fatal"
+      ],
+      "type": "object"
+    },
+    "passthroughValue": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/jsonScalar"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/passthroughValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/passthroughValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "payloadReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$payload": {
+          "$ref": "#/$defs/objectAccessPath"
+        }
+      },
+      "required": [
+        "$payload"
+      ],
+      "type": "object"
+    },
+    "persistence": {
+      "enum": [
+        "data",
+        "internal"
+      ]
+    },
+    "predicate": {
+      "additionalProperties": false,
+      "maxProperties": 1,
+      "minProperties": 1,
+      "properties": {
+        "and": {
+          "items": {
+            "$ref": "#/$defs/predicate"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "eq": {
+          "items": false,
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/operand"
+            },
+            {
+              "$ref": "#/$defs/operand"
+            }
+          ],
+          "type": "array"
+        },
+        "in": {
+          "items": false,
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/predicateReference"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/jsonScalar"
+              },
+              "type": "array"
+            }
+          ],
+          "type": "array"
+        },
+        "is_present": {
+          "$ref": "#/$defs/predicateReference"
+        },
+        "ne": {
+          "items": false,
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/operand"
+            },
+            {
+              "$ref": "#/$defs/operand"
+            }
+          ],
+          "type": "array"
+        },
+        "not": {
+          "$ref": "#/$defs/predicate"
+        },
+        "or": {
+          "items": {
+            "$ref": "#/$defs/predicate"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "predicateReference": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/slotReference"
+        },
+        {
+          "$ref": "#/$defs/deriveReference"
+        },
+        {
+          "$ref": "#/$defs/configReference"
+        },
+        {
+          "$ref": "#/$defs/payloadReference"
+        },
+        {
+          "$ref": "#/$defs/internalReference"
+        },
+        {
+          "$ref": "#/$defs/addressReference"
+        }
+      ]
+    },
+    "prompt": {
+      "additionalProperties": false,
+      "properties": {
+        "extract_hint": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "verbatim": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object"
+    },
+    "resultBindingMap": {
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/enrichmentResultReference"
+          },
+          {
+            "$ref": "#/$defs/jsonLiteral"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/stateKey"
+      },
+      "type": "object"
+    },
+    "route": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "entry_args_schema": {
+          "type": "object"
+        },
+        "trigger_phrases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "description"
+      ],
+      "type": "object"
+    },
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "identification_required": {
+          "type": "boolean"
+        },
+        "knowledge_service_id": {
+          "type": "string"
+        },
+        "service_code": {
+          "type": "string"
+        },
+        "slugs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "slotReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$slot": {
+          "$ref": "#/$defs/stateKey"
+        }
+      },
+      "required": [
+        "$slot"
+      ],
+      "type": "object"
+    },
+    "sourceReference": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/slotReference"
+        },
+        {
+          "$ref": "#/$defs/deriveReference"
+        }
+      ]
+    },
+    "stateKey": {
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "type": "string"
+    },
+    "step": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/collectStep"
+        },
+        {
+          "$ref": "#/$defs/useStep"
+        },
+        {
+          "$ref": "#/$defs/confirmStep"
+        },
+        {
+          "$ref": "#/$defs/deriveStep"
+        },
+        {
+          "$ref": "#/$defs/submitStep"
+        },
+        {
+          "$ref": "#/$defs/awaitStep"
+        }
+      ]
+    },
+    "stepReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$step": {
+          "$ref": "#/$defs/name"
+        }
+      },
+      "required": [
+        "$step"
+      ],
+      "type": "object"
+    },
+    "submitStep": {
+      "additionalProperties": false,
+      "properties": {
+        "empty_payload": {
+          "$ref": "#/$defs/emptyPayload"
+        },
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "idempotent": {
+          "type": "boolean"
+        },
+        "input": {
+          "additionalProperties": {
+            "$ref": "#/$defs/sourceReference"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/fieldName"
+          },
+          "type": "object"
+        },
+        "outcomes": {
+          "$ref": "#/$defs/outcomes"
+        },
+        "outputs": {
+          "additionalProperties": {
+            "$ref": "#/$defs/terminalResultReference"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/stateKey"
+          },
+          "type": "object"
+        },
+        "submit": {
+          "$ref": "#/$defs/name"
+        }
+      },
+      "required": [
+        "submit",
+        "id",
+        "idempotent",
+        "outcomes"
+      ],
+      "type": "object"
+    },
+    "terminalResultReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$result": {
+          "$ref": "#/$defs/objectAccessPath"
+        }
+      },
+      "required": [
+        "$result"
+      ],
+      "type": "object"
+    },
+    "tokenBindingMap": {
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/tokenReference"
+          },
+          {
+            "$ref": "#/$defs/jsonLiteral"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/stateKey"
+      },
+      "type": "object"
+    },
+    "tokenReference": {
+      "additionalProperties": false,
+      "properties": {
+        "$token": {
+          "$ref": "#/$defs/arrayAccessPath"
+        }
+      },
+      "required": [
+        "$token"
+      ],
+      "type": "object"
+    },
+    "transition": {
+      "additionalProperties": false,
+      "properties": {
+        "goto": {
+          "oneOf": [
+            {
+              "const": "END"
+            },
+            {
+              "$ref": "#/$defs/stepReference"
+            }
+          ]
+        },
+        "set": {
+          "$ref": "#/$defs/literalMap"
+        }
+      },
+      "required": [
+        "goto"
+      ],
+      "type": "object"
+    },
+    "useStep": {
+      "additionalProperties": false,
+      "properties": {
+        "use": {
+          "pattern": "^[a-z][a-z0-9_]*@[0-9]+$",
+          "type": "string"
+        },
+        "with": {
+          "additionalProperties": true,
+          "description": "Profile-validated subflow configuration payload.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "use"
+      ],
+      "type": "object"
+    },
+    "v2Passthrough": {
+      "additionalProperties": false,
+      "description": "Ordered, policy-classified source fragments emitted only by v2 migration.",
+      "properties": {
+        "contract": {
+          "const": "flowspec2/v3-preview-loss-policy@1"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/lossEntry"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "contract",
+        "entries"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://wllsena.github.io/flowspec2/schemas/flowspec-3-draft.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Non-stable source preview. It is intentionally not a runtime compiler contract.",
+  "properties": {
+    "config": {
+      "$ref": "#/$defs/config"
+    },
+    "flow": {
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "type": "string"
+    },
+    "route": {
+      "$ref": "#/$defs/route"
+    },
+    "schema": {
+      "const": "flowspec/3-draft"
+    },
+    "service": {
+      "$ref": "#/$defs/service"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/step"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "v2_passthrough": {
+      "$ref": "#/$defs/v2Passthrough"
+    },
+    "version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "flow",
+    "version",
+    "route",
+    "steps"
+  ],
+  "title": "Experimental flowspec/3-draft authoring source",
+  "type": "object"
+}

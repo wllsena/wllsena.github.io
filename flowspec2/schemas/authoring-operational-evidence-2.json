@@ -1,0 +1,301 @@
+{
+  "$defs": {
+    "capture": {
+      "additionalProperties": false,
+      "properties": {
+        "authoring_case_identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "correction_round": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "diagnostic": {
+          "enum": [
+            null,
+            "invalid_json",
+            "schema_mismatch",
+            "semantic_mismatch"
+          ]
+        },
+        "effective_model_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expected_output": {},
+        "matched": {
+          "type": "boolean"
+        },
+        "operation": {
+          "enum": [
+            "route",
+            "extract"
+          ]
+        },
+        "pair_identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "parsed_output": {},
+        "probe_identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "raw_output": {
+          "type": "string"
+        },
+        "raw_output_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "request": {
+          "$ref": "#/$defs/request"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "subject_mode": {
+          "enum": [
+            "authored",
+            "counterfactual"
+          ]
+        },
+        "subject_pointer": {
+          "pattern": "^/",
+          "type": "string"
+        },
+        "subject_sha256": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "probe_identifier",
+        "pair_identifier",
+        "subject_mode",
+        "operation",
+        "authoring_case_identifier",
+        "correction_round",
+        "source_sha256",
+        "subject_pointer",
+        "subject_sha256",
+        "request",
+        "expected_output",
+        "raw_output",
+        "raw_output_sha256",
+        "parsed_output",
+        "effective_model_version",
+        "matched",
+        "diagnostic"
+      ],
+      "type": "object"
+    },
+    "catalog": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "source_closure": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "case_identifier": {
+                "$ref": "#/$defs/identifier"
+              },
+              "correction_round": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "source_sha256": {
+                "$ref": "#/$defs/digest"
+              }
+            },
+            "required": [
+              "case_identifier",
+              "correction_round",
+              "source_sha256"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_closure",
+        "digest"
+      ],
+      "type": "object"
+    },
+    "corpus": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "format": {
+          "const": "flowspec2/operational-corpus@2"
+        },
+        "identifier": {
+          "const": "flowspec2_reference_operational"
+        },
+        "probe_format": {
+          "const": "flowspec2/operational-probe@2"
+        },
+        "probe_identifiers": {
+          "items": {
+            "$ref": "#/$defs/identifier"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "format",
+        "probe_format",
+        "identifier",
+        "digest",
+        "probe_identifiers"
+      ],
+      "type": "object"
+    },
+    "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "identifier": {
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "type": "string"
+    },
+    "provider": {
+      "additionalProperties": false,
+      "properties": {
+        "generation_configuration": {
+          "type": "object"
+        },
+        "identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "model": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "prompt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "prompt_format": {
+          "const": "flowspec2/operational-structured-output@1"
+        },
+        "sdk": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "sdk_version": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "identifier",
+        "model",
+        "sdk",
+        "sdk_version",
+        "prompt_format",
+        "prompt_digest",
+        "generation_configuration"
+      ],
+      "type": "object"
+    },
+    "request": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "response_schema": {
+          "type": "object"
+        },
+        "system_instruction": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "system_instruction",
+        "prompt",
+        "response_schema"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://wllsena.github.io/flowspec2/schemas/authoring-operational-evidence-2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "all_matched": {
+      "type": "boolean"
+    },
+    "benchmark_evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "captures": {
+      "items": {
+        "$ref": "#/$defs/capture"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "catalog": {
+      "$ref": "#/$defs/catalog"
+    },
+    "classification": {
+      "const": "report_only"
+    },
+    "corpus": {
+      "$ref": "#/$defs/corpus"
+    },
+    "digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "format": {
+      "const": "flowspec2/authoring-operational-evidence@2"
+    },
+    "matched_probes": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "package_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "provider": {
+      "$ref": "#/$defs/provider"
+    },
+    "repository_revision": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "total_probes": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "format",
+    "classification",
+    "package_version",
+    "repository_revision",
+    "benchmark_evidence_digest",
+    "corpus",
+    "provider",
+    "catalog",
+    "captures",
+    "matched_probes",
+    "total_probes",
+    "all_matched",
+    "digest"
+  ],
+  "title": "FlowSpec2 report-only authoring operational evidence",
+  "type": "object"
+}

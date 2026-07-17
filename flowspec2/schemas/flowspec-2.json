@@ -1,0 +1,1790 @@
+{
+  "$defs": {
+    "aliasLiteral": {
+      "description": "A JSON scalar or $value, copied without evaluation beyond the exact $value placeholder.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "aliasMapping": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/directAliasMapping"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/directAliasMapping"
+          },
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    },
+    "autoFlowDef": {
+      "additionalProperties": false,
+      "properties": {
+        "alias_map": {
+          "additionalProperties": {
+            "$ref": "#/$defs/aliasMapping"
+          },
+          "description": "RAIL but BOUNDED (W5). Flat fan-out for Meta-Flow field-shape mismatch ONLY. Outer key = Flow field name. Inner: either a direct slot mapping {slot:value}, OR value-keyed { <flow_value>: {slot:value,...} } for one-field->many-slots. No nested predicates, no transform DSL.",
+          "propertyNames": {
+            "$ref": "#/$defs/fieldIdentifier"
+          },
+          "type": "object"
+        },
+        "meta_flow_ref": {
+          "$ref": "#/$defs/fieldIdentifier",
+          "description": "registered Meta Flow id (config.yaml whatsapp.flow.registry)."
+        },
+        "on_submit_source": {
+          "const": "whatsapp_flow",
+          "type": "string"
+        },
+        "prefill_from": {
+          "description": "slots carried into flow_token (${data.X} prefill).",
+          "items": {
+            "$ref": "#/$defs/identifier"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "recovery": {
+          "$ref": "#/$defs/autoFlowRecoveryDef"
+        },
+        "resume_at": {
+          "$ref": "#/$defs/identifier",
+          "description": "path step id to resume at after nfm_reply submission."
+        },
+        "send_when": {
+          "$ref": "#/$defs/predicate",
+          "description": "send the Flow envelope (pre-graph) iff true, e.g. not is_present(slots.streetlight_issue)."
+        }
+      },
+      "required": [
+        "meta_flow_ref",
+        "send_when",
+        "recovery"
+      ],
+      "type": "object"
+    },
+    "autoFlowRecoveryDef": {
+      "additionalProperties": false,
+      "description": "Closed pending-state policy. The runtime accepts exact cancel, resend, fallback, and timeout events; the host schedules timeout from the emitted absolute deadline.",
+      "properties": {
+        "cancel": {
+          "description": "Deterministic action for a cancel event.",
+          "enum": [
+            "END",
+            "fallback"
+          ]
+        },
+        "fallback_at": {
+          "$ref": "#/$defs/identifier",
+          "description": "Native path step used by the fallback event and fallback policy actions."
+        },
+        "max_resends": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "timeout": {
+          "description": "Deterministic action when the deadline expires or a timeout event arrives.",
+          "enum": [
+            "END",
+            "fallback"
+          ]
+        },
+        "timeout_seconds": {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "fallback_at",
+        "cancel",
+        "timeout",
+        "max_resends",
+        "timeout_seconds"
+      ],
+      "type": "object"
+    },
+    "bindingLiteral": {
+      "description": "A bounded mapping value: a JSON scalar literal or a compiler-checked $token.* / $result.* reference.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "choiceInteractiveDef": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/interactiveDef"
+        },
+        {
+          "properties": {
+            "kind": {
+              "enum": [
+                "buttons",
+                "list"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "conditionalOptions": {
+      "description": "Conditional visibility for canonical rendered options.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "gate": {
+            "$ref": "#/$defs/predicate"
+          },
+          "value": {
+            "type": [
+              "string",
+              "boolean"
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "gate"
+        ],
+        "type": "object"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "confirmDef": {
+      "additionalProperties": false,
+      "properties": {
+        "correctable": {
+          "description": "RAIL. The set of directly-correctable slots. The constrained decoder must return one exact identifier from this closed set; the compiler routes to its node and clears it + its transitive requires[]-dependents + reading derives. No clears[] list is hand-declared.",
+          "items": {
+            "$ref": "#/$defs/identifier"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "interactive": {
+          "$ref": "#/$defs/choiceInteractiveDef",
+          "description": "Compatibility copy of the matching correctable path interactive definition; when both are present they must be identical."
+        },
+        "on_confirm": {
+          "$ref": "#/$defs/identifier",
+          "description": "step/anchor to go to on Yes (usually the terminal/requests anchor)."
+        },
+        "prompt": {
+          "$ref": "#/$defs/promptDef",
+          "description": "Compatibility copy of the matching correctable path prompt; when both are present they must be identical."
+        },
+        "slot": {
+          "$ref": "#/$defs/identifier",
+          "description": "bool slot that records confirmation."
+        },
+        "step": {
+          "$ref": "#/$defs/identifier",
+          "description": "node id of the confirm state."
+        }
+      },
+      "required": [
+        "step",
+        "slot",
+        "correctable"
+      ],
+      "type": "object"
+    },
+    "deriveDef": {
+      "additionalProperties": false,
+      "description": "RAIL. A computed value. Lookup table keyed by '|'.join(from-values) (null member => empty segment, e.g. 'Hanging||'). default is a literal or the single sigil $from[i] (the i-th source value). after = the step id this derive runs immediately after.",
+      "properties": {
+        "after": {
+          "$ref": "#/$defs/identifier",
+          "description": "step id after which this derive node runs."
+        },
+        "default": {
+          "description": "literal, or $from[i] (the ONLY deref sigil). Used on lookup miss.",
+          "type": "string"
+        },
+        "from": {
+          "description": "ordered source slot names.",
+          "items": {
+            "$ref": "#/$defs/identifier"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "lookup": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "key ('|'-joined from-values) -> value.",
+          "type": "object"
+        },
+        "writes": {
+          "$ref": "#/$defs/identifier",
+          "description": "data key the result is written to (a derived slot, never asked)."
+        }
+      },
+      "required": [
+        "writes",
+        "from",
+        "lookup"
+      ],
+      "type": "object"
+    },
+    "directAliasMapping": {
+      "additionalProperties": {
+        "$ref": "#/$defs/aliasLiteral"
+      },
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      },
+      "type": "object"
+    },
+    "domainIdentifier": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+      "type": "string"
+    },
+    "enrichmentDef": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/toolInputBindingMap",
+          "description": "Tool parameter -> literal or $token.path binding."
+        },
+        "optional": {
+          "default": false,
+          "description": "When true, a logged tool failure does not discard successfully resolved token mappings.",
+          "type": "boolean"
+        },
+        "set": {
+          "$ref": "#/$defs/stateBindingMap",
+          "description": "State key -> literal or $result.path binding."
+        },
+        "tool": {
+          "$ref": "#/$defs/identifier"
+        }
+      },
+      "required": [
+        "tool"
+      ],
+      "type": "object"
+    },
+    "fieldIdentifier": {
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+      "type": "string"
+    },
+    "identifier": {
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "type": "string"
+    },
+    "interactiveDef": {
+      "description": "RAIL. Closed UI union. Choice variants materialize options from the target domain. The CTA variant is reserved for external waits.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "field": {
+              "$ref": "#/$defs/fieldIdentifier"
+            },
+            "from_domain": {
+              "$ref": "#/$defs/domainIdentifier"
+            },
+            "kind": {
+              "const": "buttons"
+            },
+            "options_when": {
+              "$ref": "#/$defs/conditionalOptions"
+            }
+          },
+          "required": [
+            "kind",
+            "field",
+            "from_domain"
+          ],
+          "title": "Buttons",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "field": {
+              "$ref": "#/$defs/fieldIdentifier"
+            },
+            "from_domain": {
+              "$ref": "#/$defs/domainIdentifier"
+            },
+            "kind": {
+              "const": "list"
+            },
+            "options_when": {
+              "$ref": "#/$defs/conditionalOptions"
+            }
+          },
+          "required": [
+            "kind",
+            "field",
+            "from_domain"
+          ],
+          "title": "List",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "field": {
+              "$ref": "#/$defs/fieldIdentifier"
+            },
+            "kind": {
+              "const": "cta_url"
+            },
+            "next_step": {
+              "$ref": "#/$defs/identifier"
+            },
+            "out_of_band": {
+              "const": true
+            }
+          },
+          "required": [
+            "kind",
+            "field",
+            "out_of_band"
+          ],
+          "title": "Out-of-band CTA",
+          "type": "object"
+        }
+      ]
+    },
+    "predicate": {
+      "additionalProperties": false,
+      "description": "Closed object-form predicate grammar. Read-only namespaces: slots.<name>, internal.<name>, payload.<key>, config.<flag>, address.<field>. Operators: in, eq, ne, is_present, and, or, not. Canonical flows do not accept string-expression shorthand. null is a valid literal.",
+      "maxProperties": 1,
+      "minProperties": 1,
+      "properties": {
+        "and": {
+          "items": {
+            "$ref": "#/$defs/predicate"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "eq": {
+          "items": {
+            "$ref": "#/$defs/predicateOperand"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "in": {
+          "items": false,
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/stateReference"
+            },
+            {
+              "items": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "type": "array"
+            }
+          ],
+          "type": "array"
+        },
+        "is_present": {
+          "$ref": "#/$defs/stateReference"
+        },
+        "ne": {
+          "items": {
+            "$ref": "#/$defs/predicateOperand"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "not": {
+          "$ref": "#/$defs/predicate"
+        },
+        "or": {
+          "items": {
+            "$ref": "#/$defs/predicate"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "predicateOperand": {
+      "description": "A scalar operand. A bare namespaced string is always a state reference; wrap it as {literal: ...} when that exact string is the intended literal.",
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "literal": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "literal"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "promptDef": {
+      "additionalProperties": false,
+      "description": "Citizen-facing fallback text. text is LLM-editable (the LLM may rephrase) UNLESS verbatim:true, which pins legally/contractually fixed wording (gov.br CTA, 1746 disclaimer). extract_hint is LLM guidance for free-text->token extraction (LLM-freedom).",
+      "properties": {
+        "extract_hint": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "verbatim": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object"
+    },
+    "resumeContractDef": {
+      "additionalProperties": false,
+      "description": "Closed contract for host-delivered resume tokens. The embedded schema is validated as Draft 2020-12, may use only acyclic local references, and must close its object boundary.",
+      "properties": {
+        "correlation": {
+          "pattern": "^\\$token(?:\\.[A-Za-z][A-Za-z0-9_]*)+$",
+          "type": "string"
+        },
+        "duplicate": {
+          "enum": [
+            "ignore",
+            "reject"
+          ]
+        },
+        "late": {
+          "enum": [
+            "ignore",
+            "reject"
+          ]
+        },
+        "schema": {
+          "type": "object"
+        },
+        "version": {
+          "pattern": "^[1-9][0-9]*(?:\\.[0-9]+){0,2}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "schema",
+        "correlation",
+        "duplicate",
+        "late"
+      ],
+      "type": "object"
+    },
+    "stateBindingMap": {
+      "additionalProperties": {
+        "$ref": "#/$defs/bindingLiteral"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      },
+      "type": "object"
+    },
+    "stateLiteralMap": {
+      "additionalProperties": true,
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      },
+      "type": "object"
+    },
+    "stateReference": {
+      "description": "Namespaced state reference; true iff its resolved value is filled and non-null.",
+      "oneOf": [
+        {
+          "pattern": "^slots\\.[a-z][a-z0-9_]*$"
+        },
+        {
+          "pattern": "^(internal|payload|config)\\.[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        {
+          "pattern": "^address\\.[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+        }
+      ],
+      "type": "string"
+    },
+    "step": {
+      "description": "RAIL. A closed union of path-step contracts. Each kind exposes only fields the compiler consumes.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ask_when": {
+              "$ref": "#/$defs/predicate",
+              "description": "Ask only when this predicate is true."
+            },
+            "interactive": {
+              "$ref": "#/$defs/choiceInteractiveDef"
+            },
+            "prompt": {
+              "$ref": "#/$defs/promptDef"
+            },
+            "skip_when": {
+              "$ref": "#/$defs/predicate",
+              "description": "Skip this collection when this predicate is true."
+            },
+            "slot": {
+              "$ref": "#/$defs/identifier",
+              "description": "References a declared slot and pauses while it is unfilled."
+            },
+            "step": {
+              "$ref": "#/$defs/identifier",
+              "description": "Stable node id. Defaults to the slot name."
+            }
+          },
+          "required": [
+            "slot"
+          ],
+          "title": "Collect step",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "not": {
+                "required": [
+                  "on_reject",
+                  "correctable"
+                ]
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "correctable"
+                ]
+              },
+              "then": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "ask_when"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "skip_when"
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "on_reject"
+                ]
+              },
+              "then": {
+                "not": {
+                  "required": [
+                    "ask_when"
+                  ]
+                }
+              }
+            },
+            {
+              "if": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "on_reject"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "correctable"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "then": {
+                "not": {
+                  "required": [
+                    "skip_when"
+                  ]
+                }
+              }
+            }
+          ],
+          "properties": {
+            "ask_when": {
+              "$ref": "#/$defs/predicate",
+              "description": "Ask only when this predicate is true."
+            },
+            "confirm": {
+              "$ref": "#/$defs/identifier",
+              "description": "References a declared boolean confirmation slot."
+            },
+            "correctable": {
+              "const": true,
+              "description": "Marks this confirmation as the correction hub."
+            },
+            "interactive": {
+              "$ref": "#/$defs/choiceInteractiveDef"
+            },
+            "on_reject": {
+              "additionalProperties": false,
+              "description": "Ends the flow with a message when the citizen declines.",
+              "properties": {
+                "end": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "end"
+              ],
+              "type": "object"
+            },
+            "prompt": {
+              "$ref": "#/$defs/promptDef"
+            },
+            "skip_when": {
+              "$ref": "#/$defs/predicate",
+              "description": "Skip this confirmation when this predicate is true."
+            },
+            "step": {
+              "$ref": "#/$defs/identifier",
+              "description": "Stable node id. Defaults to the confirmation slot name."
+            }
+          },
+          "required": [
+            "confirm"
+          ],
+          "title": "Confirmation step",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "derive": {
+              "$ref": "#/$defs/identifier",
+              "description": "References a derive definition by its writes target."
+            },
+            "step": {
+              "$ref": "#/$defs/identifier",
+              "description": "Stable node id. Defaults to derive_<target>."
+            }
+          },
+          "required": [
+            "derive"
+          ],
+          "title": "Derivation step",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "terminal": {
+              "const": true,
+              "description": "Binds the top-level terminal action at this position."
+            }
+          },
+          "required": [
+            "terminal"
+          ],
+          "title": "Terminal step",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "use": {
+              "description": "References a declared versioned subflow use.",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "use"
+          ],
+          "title": "Subflow step",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "await_external": {
+              "const": true,
+              "description": "Binds the singular external-wait capability at this position."
+            },
+            "interactive": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/interactiveDef"
+                },
+                {
+                  "properties": {
+                    "kind": {
+                      "const": "cta_url"
+                    },
+                    "out_of_band": {
+                      "const": true
+                    }
+                  }
+                }
+              ]
+            },
+            "prompt": {
+              "$ref": "#/$defs/promptDef"
+            },
+            "step": {
+              "$ref": "#/$defs/identifier",
+              "description": "Stable node id shared with the external-wait capability."
+            }
+          },
+          "required": [
+            "await_external"
+          ],
+          "title": "External-wait step",
+          "type": "object"
+        }
+      ]
+    },
+    "subflowRef": {
+      "additionalProperties": false,
+      "description": "RAIL. A versioned mixin reference. ref = name@major (visible, diffable version event). with{} flips the subflow's common_config rails. The subflow brings its own slots/nodes/await_external and inherits idempotency/reset defaults.",
+      "properties": {
+        "ref": {
+          "pattern": "^[a-z][a-z0-9_]*@[0-9]+$",
+          "type": "string"
+        },
+        "with": {
+          "description": "Configuration is structurally an object; the resolved subflow manifest is the single source of truth for its closed keys and values.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "type": "object"
+    },
+    "terminalDef": {
+      "additionalProperties": false,
+      "properties": {
+        "empty_payload": {
+          "additionalProperties": false,
+          "description": "RAIL. Empty-payload reset semantics. never_saved: reset (treat as fresh). in_progress: ignore (don't wipe mid-flow).",
+          "properties": {
+            "in_progress": {
+              "default": "ignore",
+              "enum": [
+                "reset",
+                "ignore"
+              ]
+            },
+            "never_saved": {
+              "default": "reset",
+              "enum": [
+                "reset",
+                "ignore"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "idempotent": {
+          "description": "true => compiler computes sha256 key over inputs + replay-caches. Recipe stays in library.",
+          "type": "boolean"
+        },
+        "input": {
+          "description": "RAIL. param -> slot binding for the tool call.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "param": {
+                "$ref": "#/$defs/fieldIdentifier"
+              },
+              "slot": {
+                "$ref": "#/$defs/identifier"
+              }
+            },
+            "required": [
+              "param",
+              "slot"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "outcomes": {
+          "additionalProperties": false,
+          "description": "RAIL. The outcome trichotomy. success: set+reset_next. retryable: preserve_state, re-enter. fatal: reset_next, END.",
+          "properties": {
+            "fatal": {
+              "additionalProperties": false,
+              "properties": {
+                "reset_next": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "retryable": {
+              "additionalProperties": false,
+              "properties": {
+                "preserve_state": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "success": {
+              "additionalProperties": false,
+              "properties": {
+                "reset_next": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "set": {
+                  "$ref": "#/$defs/stateLiteralMap"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "success",
+            "retryable",
+            "fatal"
+          ],
+          "type": "object"
+        },
+        "outputs": {
+          "additionalProperties": {
+            "pattern": "^result\\.[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*$",
+            "type": "string"
+          },
+          "description": "RAIL. Mapping from destination state key to a canonical result.* tool-result path (e.g. protocol_id: result.protocol_id).",
+          "propertyNames": {
+            "$ref": "#/$defs/identifier"
+          },
+          "type": "object"
+        },
+        "step": {
+          "$ref": "#/$defs/identifier",
+          "description": "node id (e.g. open_ticket)."
+        },
+        "tool": {
+          "$ref": "#/$defs/identifier",
+          "description": "registered fulfillment tool (e.g. open_service_request)."
+        }
+      },
+      "required": [
+        "step",
+        "tool",
+        "idempotent",
+        "outcomes"
+      ],
+      "type": "object"
+    },
+    "toolInputBindingMap": {
+      "additionalProperties": {
+        "$ref": "#/$defs/bindingLiteral"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/fieldIdentifier"
+      },
+      "type": "object"
+    },
+    "transition": {
+      "additionalProperties": false,
+      "description": "A routing target with optional set. Used by await_external timeout/recovery branches.",
+      "properties": {
+        "goto": {
+          "description": "step id or 'END'.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/identifier"
+            },
+            {
+              "const": "END"
+            }
+          ]
+        },
+        "set": {
+          "$ref": "#/$defs/stateLiteralMap"
+        }
+      },
+      "required": [
+        "goto"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://wllsena.github.io/flowspec2/schemas/flowspec-2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A single self-contained JSON document describing one citizen-facing service flow. The running ReAct agent loads it and compiles a StateGraph[ServiceState] inside the multi_step_service MCP tool. RAIL fields (the deterministic structure) pin states, slot value-domains, transitions, guards, tool bindings, interrupts, idempotency/reset and guardrails. LLM-FREEDOM fields (non-deterministic execution within the rails) are ONLY: route.description, route.trigger_phrases, every prompt.text (unless verbatim:true), domains.*.normalize hints, and the capabilities the LLM MAY invoke. The boundary is positional: by FIELD (only prompt.text/extract_hint/route.* are LLM-editable), by LOCATION (path/overrides/uses are rails; capabilities is the fenced LLM zone), and by CONSTRUCT (the closed domain IS the boundary — the LLM extracts a candidate, the generated validator rejects out-of-domain).",
+  "properties": {
+    "auto_flow": {
+      "$ref": "#/$defs/autoFlowDef",
+      "description": "RAIL. Pre-graph WhatsApp Flow gate (NOT a state — it suspends on nfm_reply, not the next text turn). If send_when holds and the entry slot is empty, the compiler sends the Meta Flow envelope and returns status:flow_sent WITHOUT entering the graph. On submission the nfm_reply is re-injected as payload._source=whatsapp_flow and resumed at resume_at. alias_map handles one-Flow-field -> multiple-slots fan-out (fixes A4) bound HARD to a flat value-keyed map (no nested logic)."
+    },
+    "capabilities": {
+      "additionalProperties": false,
+      "description": "FENCED LLM-FREEDOM zone (boundary by LOCATION). Agent-scope non-deterministic side-actions the LLM MAY invoke at its discretion, bounded by the Mule outbound whitelist (cross-checked by the COMPILER against config.yaml, never encoded here). await_external is the one reusable out-of-band primitive: it is bound either to an explicit path marker or to a subflow-provided step.",
+      "properties": {
+        "await_external": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "timeout"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "timeout_seconds": {
+                    "default": 900
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "max_resends"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "recovery": {
+                    "required": [
+                      "resend"
+                    ]
+                  }
+                },
+                "required": [
+                  "recovery"
+                ]
+              }
+            }
+          ],
+          "dependentRequired": {
+            "timeout_seconds": [
+              "timeout"
+            ]
+          },
+          "description": "First-class out-of-band suspend/resume primitive (gov.br OAuth, payment redirect, alternate IdP). Emits an out-of-band host marker with an absolute deadline when timeout is configured, suspends on an EXTERNAL signal (not the next text turn), and resumes with atomic bounded mappings. Timeout is delivered by the host as _external_event=timeout; the runtime owns no scheduler.",
+          "properties": {
+            "interactive": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/interactiveDef"
+                },
+                {
+                  "properties": {
+                    "kind": {
+                      "const": "cta_url"
+                    },
+                    "out_of_band": {
+                      "const": true
+                    }
+                  }
+                }
+              ]
+            },
+            "kind": {
+              "enum": [
+                "cta_url"
+              ]
+            },
+            "max_resends": {
+              "description": "Optional runtime-enforced budget for accepted resend recovery events. Omission leaves resend limiting to the host.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "on_resume": {
+              "additionalProperties": false,
+              "properties": {
+                "enrich": {
+                  "description": "Explicit enrichment call. A bare tool name remains accepted for legacy subflow documents; new documents declare the object contract.",
+                  "oneOf": [
+                    {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/enrichmentDef"
+                    }
+                  ]
+                },
+                "set": {
+                  "$ref": "#/$defs/stateBindingMap",
+                  "description": "State key -> literal or $token.path binding. Resolved writes are committed atomically."
+                }
+              },
+              "type": "object"
+            },
+            "prompt": {
+              "$ref": "#/$defs/promptDef"
+            },
+            "recovery": {
+              "additionalProperties": false,
+              "properties": {
+                "abort": {
+                  "$ref": "#/$defs/transition"
+                },
+                "resend": {
+                  "$ref": "#/$defs/transition"
+                },
+                "switch": {
+                  "$ref": "#/$defs/transition"
+                }
+              },
+              "type": "object"
+            },
+            "resume": {
+              "$ref": "#/$defs/resumeContractDef",
+              "description": "Versioned token, correlation, replay, and late-delivery contract. Required by strict runtime profiles; omission identifies a legacy capability."
+            },
+            "resume_on": {
+              "$ref": "#/$defs/identifier",
+              "description": "External signal payload key, e.g. govbr_token."
+            },
+            "step": {
+              "$ref": "#/$defs/identifier",
+              "description": "Stable id of a subflow-provided await node. An explicit path await_external step may supply the same id instead."
+            },
+            "timeout": {
+              "$ref": "#/$defs/transition"
+            },
+            "timeout_seconds": {
+              "description": "Relative duration used to materialize the absolute host deadline.",
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "resume_on"
+          ],
+          "type": "object"
+        },
+        "handoff": {
+          "additionalProperties": false,
+          "properties": {
+            "target": {
+              "description": "e.g. '1746' or a human queue.",
+              "type": "string"
+            },
+            "when": {
+              "default": "llm_decides",
+              "enum": [
+                "llm_decides"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "location_in": {
+          "default": false,
+          "type": "boolean"
+        },
+        "media_in": {
+          "additionalProperties": false,
+          "properties": {
+            "analyze": {
+              "items": {
+                "enum": [
+                  "image",
+                  "audio",
+                  "video"
+                ]
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "route_by": {
+              "$ref": "#/$defs/identifier"
+            }
+          },
+          "type": "object"
+        },
+        "media_out": {
+          "description": "Outbound media types the LLM may send. A template entry carries a Meta 24h-window template name + variable bindings (fixes A7). Plain types are bare strings.",
+          "items": {
+            "oneOf": [
+              {
+                "enum": [
+                  "image",
+                  "video",
+                  "audio",
+                  "document",
+                  "location",
+                  "contacts"
+                ]
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "template": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "vars": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "template"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "session_reset": {
+          "default": false,
+          "type": "boolean"
+        },
+        "tts": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "config": {
+      "additionalProperties": false,
+      "description": "RAIL. Guardrail booleans consumed by subflows and the engine. Deterministically force skip/default/end. No LLM hook.",
+      "properties": {
+        "address_required": {
+          "default": false,
+          "type": "boolean"
+        },
+        "identification_required": {
+          "default": false,
+          "type": "boolean"
+        },
+        "max_attempts": {
+          "default": 3,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "confirm": {
+      "$ref": "#/$defs/confirmDef",
+      "description": "RAIL. The data-confirmation state + non-linear correction routing (escape hatch #2). On confirmation -> terminal. The constrained decoder emits the exact canonical identifier of one correctable slot; the compiler routes to that slot's node and clears it + its transitive requires[]-dependents + derives that read them. Author lists only the directly-correctable slots; the cascade is derived."
+    },
+    "derive": {
+      "description": "RAIL. Computed values, never asked (escape hatch #1). Lookup-table-ONLY with a single $from[i] fallback — deliberately too weak to be an expression language. Inserted as a no-prompt node that always advances. Prevents value-domain leak: the LLM never computes a classification.",
+      "items": {
+        "$ref": "#/$defs/deriveDef"
+      },
+      "type": "array"
+    },
+    "domains": {
+      "additionalProperties": {
+        "description": "Closed union by domain kind. A kind accepts only fields consumed by its validator.",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "normalize": {
+                "additionalProperties": false,
+                "description": "Deterministic free-speech to closed-token coercion.",
+                "properties": {
+                  "accent_fold": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "number_words": {
+                    "default": false,
+                    "description": "Map supported number words to the positional token.",
+                    "type": "boolean"
+                  },
+                  "synonyms": {
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "description": "Free-text alias to a canonical categorical token.",
+                    "propertyNames": {
+                      "minLength": 1
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "rows": {
+                "description": "Optional per-token presentation subtitles. Semantic linking requires each row value to belong to values and to appear once.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "categorical",
+                "default": "categorical"
+              },
+              "values": {
+                "description": "Ordered closed token set. null is an explicit member.",
+                "items": {
+                  "oneOf": [
+                    {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "values"
+            ],
+            "title": "Categorical domain",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "normalize": {
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "emoji_veto": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "emoji_veto"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "affirmation": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "affirmation"
+                      ]
+                    }
+                  }
+                ],
+                "description": "Deterministic boolean coercion and aliases.",
+                "properties": {
+                  "accent_fold": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "affirmation": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "emoji_veto": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "synonyms": {
+                    "additionalProperties": {
+                      "type": "boolean"
+                    },
+                    "description": "Free-text alias to a canonical boolean.",
+                    "propertyNames": {
+                      "minLength": 1
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "type": {
+                "const": "bool"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "Boolean domain",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "optional": {
+                "default": false,
+                "description": "Accept an empty answer as an explicit empty string.",
+                "type": "boolean"
+              },
+              "type": {
+                "const": "free_text"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "Free-text domain",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "brazilian_tax_id"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "Brazilian tax ID domain",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "email"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "Email domain",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "name"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "Name domain",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "maximum": {
+                "description": "Inclusive upper bound.",
+                "type": "number"
+              },
+              "minimum": {
+                "description": "Inclusive lower bound.",
+                "type": "number"
+              },
+              "type": {
+                "const": "integer"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "Integer domain",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "maximum": {
+                "description": "Inclusive upper bound.",
+                "type": "number"
+              },
+              "minimum": {
+                "description": "Inclusive lower bound.",
+                "type": "number"
+              },
+              "type": {
+                "const": "number"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "Number domain",
+            "type": "object"
+          }
+        ]
+      },
+      "description": "RAIL + the SPINE. The closed value-domain registry materializes the Pydantic before-validator, AgentResponse.payload_schema, interactive button titles, and interactive list rows. Categorical options come from values/rows; bool options expose true/false with Yes/No titles. Declaring a domain once is the entire structure/execution boundary: values are the rail and free-text-to-token extraction is LLM work. The validator prevents widening the domain. normalize is the only LLM-facing hint and is still deterministically enforced.",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/domainIdentifier"
+      },
+      "type": "object"
+    },
+    "entry": {
+      "additionalProperties": false,
+      "description": "RAIL. Generic best-effort, non-terminal entry side effect. Runs once before the path; never asks, blocks, or resets. Service identity remains in the service contract instead of this executable hook.",
+      "properties": {
+        "blocking": {
+          "default": false,
+          "description": "false = failure is swallowed and the flow proceeds.",
+          "type": "boolean"
+        },
+        "tool": {
+          "$ref": "#/$defs/identifier",
+          "description": "Registered tool name to call on entry."
+        },
+        "writes": {
+          "$ref": "#/$defs/identifier",
+          "description": "Data-partition key under which the result is stored."
+        }
+      },
+      "required": [
+        "tool"
+      ],
+      "type": "object"
+    },
+    "flow": {
+      "description": "RAIL. Stable flow id == service_name; StateManager + checkpointer + config.yaml flow.registry key. Immutable across versions.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "type": "string"
+    },
+    "overrides": {
+      "additionalProperties": false,
+      "description": "RAIL. The hard-case tier (escape hatches), kept OUT of the linear path so the happy-path read stays clean. Only flows that need them pay. A simple linear service omits this entirely.",
+      "properties": {
+        "gates": {
+          "additionalProperties": {
+            "$ref": "#/$defs/predicate"
+          },
+          "description": "Multi-slot gate predicates keyed by step id. gate==false => the step's slot is satisfied-by-vacuity (skipped uniformly, no special skip-node). Uses the frozen object grammar.",
+          "propertyNames": {
+            "$ref": "#/$defs/identifier"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "path": {
+      "description": "RAIL. The flat ordered happy path. Implicit fall-through: each step is one StateGraph node; linear order is the default edge; the PAUSE->END and back-to-agent edges are synthesized. The step pointer is never serialized; position is rediscovered from state. A step is exactly one of slot | confirm | derive | terminal | use | await_external.",
+      "items": {
+        "$ref": "#/$defs/step"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "route": {
+      "additionalProperties": false,
+      "description": "LLM-FREEDOM surface. The ONLY hook the top-level ReAct LLM uses to enter this flow. description = the routing hook (non-deterministic route-in). trigger_phrases = a versionable seed, NOT the sole signal. entry_args_schema = the closed set of initial slots the LLM may pass on entry (routing metadata only, never app state).",
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "entry_args_schema": {
+          "description": "JSON-Schema object of slots permitted on flow entry. Keys must be declared slots.",
+          "type": "object"
+        },
+        "trigger_phrases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "description"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "flowspec/2",
+      "description": "RAIL. Format identifier + major version of THIS spec language (not the flow)."
+    },
+    "service": {
+      "additionalProperties": false,
+      "description": "RAIL. First-class service-identity metadata, decoupled from executable nodes. Carries service catalog codes, slugs, and knowledge identifiers; authors declare these values here instead of synthesizing an initialization node.",
+      "properties": {
+        "id": {
+          "description": "ticketing system/1746 service id, e.g. '18131'.",
+          "type": "string"
+        },
+        "identification_required": {
+          "default": false,
+          "type": "boolean"
+        },
+        "knowledge_service_id": {
+          "description": "Knowledge-hub id for best-effort context load.",
+          "type": "string"
+        },
+        "service_code": {
+          "type": "string"
+        },
+        "slugs": {
+          "description": "RAIL. Catalog/service-detail slug(s) this flow serves. A host app auto-exposes the guided flow for any service whose slug is listed here, so adding a guided flow is just dropping a JSON with its slug(s) — no host code change. Several slugs may point at one flow.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "slots": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "else": {
+              "not": {
+                "required": [
+                  "default"
+                ]
+              }
+            },
+            "if": {
+              "properties": {
+                "on_exhaust": {
+                  "const": "default"
+                }
+              },
+              "required": [
+                "on_exhaust"
+              ]
+            },
+            "then": {
+              "required": [
+                "default"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "nullable": {
+                  "const": true
+                }
+              },
+              "required": [
+                "nullable"
+              ]
+            },
+            "then": {
+              "properties": {
+                "required": {
+                  "const": true
+                }
+              },
+              "required": [
+                "required"
+              ]
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "prefill_sources"
+              ]
+            },
+            "then": {
+              "properties": {
+                "fill_only_when_asked": {
+                  "const": true
+                }
+              },
+              "required": [
+                "fill_only_when_asked"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "default": {
+            "description": "Fallback value stored only by on_exhaust:default. The compiler validates and normalizes it against the slot domain; null therefore requires a nullable domain."
+          },
+          "domain": {
+            "$ref": "#/$defs/domainIdentifier",
+            "description": "References a key in domains{}."
+          },
+          "fill_only_when_asked": {
+            "default": false,
+            "description": "RAIL (single declarative flag, fixes A9). When true, the engine accepts this slot only after its own prompt or from a channel listed in prefill_sources. NOT a rule engine.",
+            "type": "boolean"
+          },
+          "max_attempts": {
+            "description": "Re-ask budget; engine owns the counter. Defaults to config.max_attempts.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "nullable": {
+            "default": false,
+            "description": "Explicit null is a domain-valid stored value. This is distinct from the no-value skip performed by required:false.",
+            "type": "boolean"
+          },
+          "on_exhaust": {
+            "default": "reask",
+            "description": "After max_attempts: reask, skip without storing a value, store default, handoff, or END.",
+            "enum": [
+              "reask",
+              "skip",
+              "default",
+              "handoff",
+              "END"
+            ]
+          },
+          "persist": {
+            "default": "data",
+            "description": "Which persistent ServiceState partition owns the validated slot. 'data' is agent-visible; 'internal' is hidden.",
+            "enum": [
+              "data",
+              "internal"
+            ]
+          },
+          "prefill_sources": {
+            "description": "Channels allowed to pre-fill this slot without its own prompt when fill_only_when_asked is true. e.g. whatsapp_flow, govbr_token.",
+            "items": {
+              "$ref": "#/$defs/identifier"
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "required": {
+            "default": false,
+            "description": "When true, a gate-open collector requires a domain-valid value; explicit null is accepted only when nullable is true. When false, explicit null deterministically skips collection without storing a slot value.",
+            "type": "boolean"
+          },
+          "requires": {
+            "description": "RAIL. Hard precedence + dependency edges: these slots must be filled before this one is asked, AND this slot's value is invalidated (cleared) when any is corrected. The clear-cascade is DERIVED from this — author declares NOTHING extra (footgun killer).",
+            "items": {
+              "$ref": "#/$defs/identifier"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "domain"
+        ],
+        "type": "object"
+      },
+      "description": "RAIL. Per-slot declarations referenced by path steps, interactive options, and corrections. Binds a stable state key to a domain + persistence partition + collection guardrails. Position is rediscovered from filled slots; NO step pointer is persisted.",
+      "propertyNames": {
+        "$ref": "#/$defs/identifier"
+      },
+      "type": "object"
+    },
+    "terminal": {
+      "$ref": "#/$defs/terminalDef",
+      "description": "RAIL. The single fulfillment action + lifecycle (idempotency/reset/empty-payload). Reachable only when every required gate-open slot is filled. idempotent:true is one flag; the sha256 key recipe + retryable-exception taxonomy stay in the library. Outcome TRICHOTOMY: success (reset_next), retryable (preserve_state, re-enter), fatal (reset_next)."
+    },
+    "uses": {
+      "description": "RAIL + the MINIMALITY lever. Versioned reusable subflows (mixins) composed by id@major + config flags. Splices the subflow's slots+nodes+routers at its anchor in path; inherits invisible idempotency/reset/max-attempt defaults so a new author cannot forget them. The compiler discovers each subflow's exposed slots and validates corrections, requirements, derives, and terminal mappings after expansion.",
+      "items": {
+        "$ref": "#/$defs/subflowRef"
+      },
+      "type": "array"
+    },
+    "version": {
+      "description": "RAIL. Semver of this flow document. Bump per change; diff-friendly.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "flow",
+    "version",
+    "route",
+    "domains",
+    "path"
+  ],
+  "title": "flowspec/2 — declarative conversational flow definition compiled to LangGraph",
+  "type": "object"
+}

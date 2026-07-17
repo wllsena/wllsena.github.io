@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Legacy URL</title>
+  </head>
+  <body>
+    <p id="message">This legacy URL was not found.</p>
+    <script>
+      const legacyProjects = ["/cnpj_insight/", "/Rasterizer/"];
+      const project = legacyProjects.find((prefix) => window.location.pathname.startsWith(prefix));
+      if (project) {
+        const target = `https://willsneves.github.io${window.location.pathname}${window.location.search}${window.location.hash}`;
+        document.getElementById("message").innerHTML = `Moved to <a href="${target}">${target}</a>.`;
+        window.location.replace(target);
+      }
+    </script>
+  </body>
+</html>

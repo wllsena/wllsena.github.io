@@ -1,0 +1,165 @@
+{
+  "$defs": {
+    "assessment": {
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "items": {
+            "$ref": "#/$defs/criterion"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "subject": {
+          "$ref": "#/$defs/subject"
+        }
+      },
+      "required": [
+        "subject",
+        "criteria",
+        "passed"
+      ],
+      "type": "object"
+    },
+    "criterion": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_identifier": {
+          "enum": [
+            "prompt_claim_fidelity",
+            "prompt_input_contract_fidelity",
+            "prompt_interaction_context",
+            "prompt_requested_action_clarity",
+            "route_claim_fidelity",
+            "route_scope_coverage",
+            "route_scope_exclusion",
+            "route_standalone_meaning"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "rationale": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "criterion_identifier",
+        "decision",
+        "rationale"
+      ],
+      "type": "object"
+    },
+    "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "identifier": {
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "type": "string"
+    },
+    "subject": {
+      "additionalProperties": false,
+      "properties": {
+        "case_identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "correction_round": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "route_description",
+            "path_prompt",
+            "confirm_prompt"
+          ]
+        },
+        "pointer": {
+          "pattern": "^/",
+          "type": "string"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "text_sha256": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "case_identifier",
+        "correction_round",
+        "source_sha256",
+        "kind",
+        "pointer",
+        "text_sha256"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://wllsena.github.io/flowspec2/schemas/authoring-presentation-review-1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assessments": {
+      "items": {
+        "$ref": "#/$defs/assessment"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "benchmark_evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "format": {
+      "const": "flowspec2/authoring-presentation-review@1"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "reviewer_identifier": {
+      "$ref": "#/$defs/identifier"
+    },
+    "rubric": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "const": "cbe91fa6899f2cb815589970cc14a24bf651f2504bbbf740a88a30cd0ac3f995"
+        },
+        "format": {
+          "const": "flowspec2/authoring-presentation-rubric@1"
+        },
+        "identifier": {
+          "const": "flowspec2_citizen_presentation"
+        }
+      },
+      "required": [
+        "format",
+        "identifier",
+        "digest"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "format",
+    "benchmark_evidence_digest",
+    "rubric",
+    "reviewer_identifier",
+    "assessments",
+    "passed",
+    "digest"
+  ],
+  "title": "FlowSpec2 authoring presentation review",
+  "type": "object"
+}

@@ -1,0 +1,455 @@
+{
+  "$defs": {
+    "attempt": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_source_bytes": {
+          "oneOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "compilation": {
+          "enum": [
+            "not_requested",
+            "skipped",
+            "succeeded",
+            "failed"
+          ]
+        },
+        "correction_round": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          },
+          "type": "array"
+        },
+        "raw_source_bytes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "succeeded": {
+          "type": "boolean"
+        },
+        "token_proxy_units": {
+          "oneOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "correction_round",
+        "source_sha256",
+        "raw_source_bytes",
+        "canonical_source_bytes",
+        "token_proxy_units",
+        "compilation",
+        "succeeded",
+        "diagnostics"
+      ],
+      "type": "object"
+    },
+    "benchmark": {
+      "additionalProperties": false,
+      "properties": {
+        "max_correction_rounds": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_correction_rounds"
+      ],
+      "type": "object"
+    },
+    "capture": {
+      "additionalProperties": false,
+      "properties": {
+        "authored_source": {
+          "type": "string"
+        },
+        "case_identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "correction_round": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "effective_model_version": {
+          "oneOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "case_identifier",
+        "correction_round",
+        "authored_source",
+        "source_sha256",
+        "effective_model_version"
+      ],
+      "type": "object"
+    },
+    "caseResult": {
+      "additionalProperties": false,
+      "properties": {
+        "attempts": {
+          "items": {
+            "$ref": "#/$defs/attempt"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "case_identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "correction_rounds": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "feature_tags": {
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "format_identifier": {
+          "const": "flowspec/2"
+        },
+        "succeeded": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "case_identifier",
+        "feature_tags",
+        "format_identifier",
+        "succeeded",
+        "correction_rounds",
+        "attempts"
+      ],
+      "type": "object"
+    },
+    "corpus": {
+      "additionalProperties": false,
+      "properties": {
+        "case_format": {
+          "const": "flowspec2/authoring-case@3"
+        },
+        "case_identifiers": {
+          "items": {
+            "$ref": "#/$defs/identifier"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "format": {
+          "const": "flowspec2/authoring-corpus@3"
+        },
+        "identifier": {
+          "$ref": "#/$defs/identifier"
+        }
+      },
+      "required": [
+        "format",
+        "case_format",
+        "identifier",
+        "digest",
+        "case_identifiers"
+      ],
+      "type": "object"
+    },
+    "diagnostic": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "message": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "pattern": "^$|^/",
+          "type": "string"
+        },
+        "related_locations": {
+          "items": {
+            "$ref": "#/$defs/diagnosticLocation"
+          },
+          "type": "array"
+        },
+        "severity": {
+          "enum": [
+            "warning",
+            "error"
+          ]
+        },
+        "suggested_fix": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "path",
+        "message"
+      ],
+      "type": "object"
+    },
+    "diagnosticLocation": {
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "pattern": "^$|^/",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "identifier": {
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "type": "string"
+    },
+    "nonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "profile": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "identifier": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "required": [
+        "identifier",
+        "digest"
+      ],
+      "type": "object"
+    },
+    "provider": {
+      "additionalProperties": false,
+      "properties": {
+        "generation_configuration": {
+          "type": "object"
+        },
+        "identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "model": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "prompt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "prompt_format": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sdk": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sdk_version": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "required": [
+        "identifier",
+        "model",
+        "sdk",
+        "sdk_version",
+        "prompt_format",
+        "prompt_digest",
+        "generation_configuration"
+      ],
+      "type": "object"
+    },
+    "report": {
+      "additionalProperties": false,
+      "properties": {
+        "benchmark_identifier": {
+          "$ref": "#/$defs/identifier"
+        },
+        "case_results": {
+          "items": {
+            "$ref": "#/$defs/caseResult"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "format_identifier": {
+          "const": "flowspec/2"
+        },
+        "profile_identifier": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "successful_cases": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "token_proxy": {
+          "additionalProperties": false,
+          "properties": {
+            "bytes_per_unit": {
+              "const": 4
+            },
+            "method": {
+              "const": "utf8_byte_quartets"
+            }
+          },
+          "required": [
+            "method",
+            "bytes_per_unit"
+          ],
+          "type": "object"
+        },
+        "total_attempts": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "total_cases": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "total_correction_rounds": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "benchmark_identifier",
+        "format_identifier",
+        "profile_identifier",
+        "successful_cases",
+        "total_cases",
+        "total_attempts",
+        "total_correction_rounds",
+        "token_proxy",
+        "case_results"
+      ],
+      "type": "object"
+    },
+    "sourceAdapter": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "const": "flowspec/2"
+        },
+        "implementation": {
+          "const": "FlowSpec2JsonAdapter"
+        },
+        "version": {
+          "const": "1"
+        }
+      },
+      "required": [
+        "format",
+        "implementation",
+        "version"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://wllsena.github.io/flowspec2/schemas/authoring-benchmark-evidence-2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "benchmark": {
+      "$ref": "#/$defs/benchmark"
+    },
+    "captures": {
+      "items": {
+        "$ref": "#/$defs/capture"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "corpus": {
+      "$ref": "#/$defs/corpus"
+    },
+    "digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "format": {
+      "const": "flowspec2/authoring-benchmark-evidence@3"
+    },
+    "package_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "profile": {
+      "$ref": "#/$defs/profile"
+    },
+    "provider": {
+      "$ref": "#/$defs/provider"
+    },
+    "report": {
+      "$ref": "#/$defs/report"
+    },
+    "repository_revision": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_adapter": {
+      "$ref": "#/$defs/sourceAdapter"
+    }
+  },
+  "required": [
+    "format",
+    "package_version",
+    "repository_revision",
+    "benchmark",
+    "corpus",
+    "profile",
+    "source_adapter",
+    "provider",
+    "captures",
+    "report",
+    "digest"
+  ],
+  "title": "FlowSpec2 authoring benchmark evidence",
+  "type": "object"
+}
